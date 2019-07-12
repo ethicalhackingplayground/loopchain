@@ -21,10 +21,10 @@ import loopchain.utils as util
 from loopchain import configure as conf
 from loopchain.baseservice import ObjectManager, TimerService, SlotTimer, Timer
 from loopchain.blockchain import Epoch
-from loopchain.blockchain.votes.v0_1a import BlockVotes
-from loopchain.blockchain.blocks import Block
-from loopchain.blockchain.types import ExternalAddress, Hash32
+from loopchain.blockchain.blocks import Block, BlockBuilder
 from loopchain.blockchain.exception import NotEnoughVotes
+from loopchain.blockchain.types import ExternalAddress, Hash32
+from loopchain.blockchain.votes.v0_1a import BlockVotes
 from loopchain.channel.channel_property import ChannelProperty
 from loopchain.peer.consensus_base import ConsensusBase
 
@@ -32,7 +32,7 @@ from loopchain.peer.consensus_base import ConsensusBase
 class ConsensusSiever(ConsensusBase):
     def __init__(self, block_manager):
         super().__init__(block_manager)
-        self.__block_generation_timer = None
+        self.__block_generation_timer: SlotTimer = None
         self.__lock = None
 
         self._loop: asyncio.BaseEventLoop = None
@@ -77,7 +77,7 @@ class ConsensusSiever(ConsensusBase):
         util.logger.debug("Cannot vote before starting consensus.")
         # raise RuntimeError("Cannot vote before starting consensus.")
 
-    def __build_candidate_block(self, block_builder, next_leader, vote_result):
+    def __build_candidate_block(self, block_builder: BlockBuilder, next_leader: str, vote_result):
         last_block = self._blockchain.last_block
         block_builder.height = last_block.header.height + 1
         block_builder.prev_hash = last_block.header.hash
@@ -150,7 +150,7 @@ class ConsensusSiever(ConsensusBase):
             last_unconfirmed_block = self._blockchain.last_unconfirmed_block
             next_leader = ExternalAddress.fromhex(ChannelProperty().peer_id)
 
-            need_next_call = False
+            need_next_call: bool = False
             try:
                 complained_result = self._block_manager.epoch.complained_result
                 if complained_result:

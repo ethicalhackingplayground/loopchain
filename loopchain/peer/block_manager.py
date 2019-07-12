@@ -36,6 +36,7 @@ from loopchain.blockchain.types import TransactionStatusInQueue, Hash32
 from loopchain.blockchain.votes.v0_1a import BlockVote, LeaderVote, BlockVotes, LeaderVotes
 from loopchain.channel.channel_property import ChannelProperty
 from loopchain.peer import status_code
+from loopchain.peer.consensus_base import ConsensusBase
 from loopchain.peer.consensus_siever import ConsensusSiever
 from loopchain.protos import loopchain_pb2, loopchain_pb2_grpc, message_code
 from loopchain.store.key_value_store import KeyValueStore
@@ -64,7 +65,7 @@ class BlockManager:
         self.__blockchain = BlockChain(channel_name, store_identity)
         self.__peer_type = None
         self.__consensus = None
-        self.__consensus_algorithm = None
+        self.__consensus_algorithm: ConsensusBase = None
         self.candidate_blocks = CandidateBlocks()
         self.__block_height_sync_lock = threading.Lock()
         self.__block_height_thread_pool = ThreadPoolExecutor(1, 'BlockHeightSyncThread')
@@ -116,7 +117,7 @@ class BlockManager:
         self.__consensus = consensus
 
     @property
-    def consensus_algorithm(self):
+    def consensus_algorithm(self) -> ConsensusBase:
         return self.__consensus_algorithm
 
     @property

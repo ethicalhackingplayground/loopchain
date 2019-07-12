@@ -31,7 +31,7 @@ from loopchain.channel.channel_property import ChannelProperty
 
 
 class Epoch:
-    def __init__(self, block_manager, leader_id=None):
+    def __init__(self, block_manager, leader_id: str = None):
         blockchain = block_manager.get_blockchain()
         if blockchain.last_block:
             self.height = blockchain.last_block.header.height + 1
@@ -46,9 +46,9 @@ class Epoch:
         # But now! only collect leader complain votes.
         self.__candidate_blocks = None
 
-        self.round = 0
+        self.round: int = 0
         self.complain_votes: Dict[int, LeaderVotes] = {}
-        self.complained_result = None
+        self.complained_result: bool = None
 
         self.new_votes()
         self.new_round(leader_id, 0)

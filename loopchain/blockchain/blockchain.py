@@ -69,7 +69,7 @@ class BlockChain:
         # last block in block db
         self.__last_block = None
         # last unconfirmed block that the leader broadcast.
-        self.last_unconfirmed_block = None
+        self.last_unconfirmed_block: Block = None
         self.__channel_name = channel_name
         self.__peer_id = ChannelProperty().peer_id
 

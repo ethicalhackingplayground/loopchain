@@ -23,6 +23,6 @@ class ChannelProperty(metaclass=SingletonMetaClass):
         self.radio_station_target = None
         self.amqp_target = None
         self.peer_port = None
-        self.peer_id = None
+        self.peer_id: str = None
         self.node_type = None
         self.nid = None

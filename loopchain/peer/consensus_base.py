@@ -22,11 +22,11 @@ class ConsensusBase(metaclass=ABCMeta):
     def __init__(self, block_manager):
         self._block_manager = block_manager
         self._channel_name = block_manager.channel_name
-        self._made_block_count = 0
+        self._made_block_count: int = 0
         self._blockchain = self._block_manager.get_blockchain()
 
     @property
-    def made_block_count(self):
+    def made_block_count(self) -> int:
         return self._made_block_count
 
     def stop(self):

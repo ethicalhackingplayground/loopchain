@@ -769,7 +769,7 @@ class ChannelService:
         }
         request = convert_params(request, ParamType.invoke)
         stub = StubCollection().icon_score_stubs[ChannelProperty().name]
-        response = stub.sync_task().invoke(request)
+        response: dict = stub.sync_task().invoke(request)
         response_to_json_query(response)
 
         tx_receipts = response["txResults"]
