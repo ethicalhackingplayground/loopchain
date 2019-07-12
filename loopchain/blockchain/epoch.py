@@ -18,12 +18,15 @@ Candidate Blocks, Quorum, Votes and Leader Complaints.
 import logging
 import traceback
 from typing import Dict, Optional
+
 from loopchain import utils, configure as conf
 from loopchain.baseservice import ObjectManager
-from loopchain.blockchain.votes.v0_1a import LeaderVotes, LeaderVote
-from loopchain.blockchain.types import TransactionStatusInQueue, ExternalAddress
+from loopchain.baseservice.aging_cache import AgingCache
 from loopchain.blockchain.blocks import BlockBuilder
 from loopchain.blockchain.transactions import Transaction, TransactionVerifier
+from loopchain.blockchain.transactions.transaction_versioner import TransactionVersioner
+from loopchain.blockchain.types import TransactionStatusInQueue, ExternalAddress
+from loopchain.blockchain.votes.v0_1a import LeaderVotes, LeaderVote
 from loopchain.channel.channel_property import ChannelProperty
 
 
@@ -156,11 +159,11 @@ class Epoch:
                 utils.logger.debug(f"last_unconfirmed_block({blockchain.last_unconfirmed_block.header.hash}), "
                                   f"vote result({vote_result})")
 
-    def __add_tx_to_block(self, block_builder):
-        tx_queue = self.__block_manager.get_tx_queue()
+    def __add_tx_to_block(self, block_builder: BlockBuilder):
+        tx_queue: AgingCache = self.__block_manager.get_tx_queue()
 
         block_tx_size = 0
-        tx_versioner = self.__blockchain.tx_versioner
+        tx_versioner: TransactionVersioner = self.__blockchain.tx_versioner
         while tx_queue:
             if block_tx_size >= conf.MAX_TX_SIZE_IN_BLOCK:
                 logging.debug(f"consensus_base total size({block_builder.size()}) "
@@ -168,7 +171,7 @@ class Epoch:
                               f"_txQueue size ({len(tx_queue)})")
                 break
 
-            tx: 'Transaction' = tx_queue.get_item_in_status(
+            tx: Transaction = tx_queue.get_item_in_status(
                 TransactionStatusInQueue.normal,
                 TransactionStatusInQueue.added_to_block
             )
@@ -177,8 +180,8 @@ class Epoch:
 
             if not utils.is_in_time_boundary(tx.timestamp, conf.ALLOW_TIMESTAMP_BOUNDARY_SECOND_IN_BLOCK):
                 utils.logger.info(f"fail add tx to block by ALLOW_TIMESTAMP_BOUNDARY_SECOND_IN_BLOCK"
-                                 f"({conf.ALLOW_TIMESTAMP_BOUNDARY_SECOND_IN_BLOCK}) "
-                                 f"tx({tx.hash}), timestamp({tx.timestamp})")
+                                  f"({conf.ALLOW_TIMESTAMP_BOUNDARY_SECOND_IN_BLOCK}) "
+                                  f"tx({tx.hash}), timestamp({tx.timestamp})")
                 continue
 
             tv = TransactionVerifier.new(tx.version, tx.type(), tx_versioner)

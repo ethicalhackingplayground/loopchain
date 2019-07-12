@@ -13,52 +13,56 @@
 # limitations under the License.
 """Custom Dictionary type that has limit size by timestamp"""
 
-import time
 import threading
+import time
 from collections import OrderedDict, MutableMapping
+from typing import Union, Tuple
+
+from loopchain.blockchain.transactions.transaction import Transaction
+from loopchain.blockchain.types import TransactionStatusInQueue, Hash32
 
 
 class AgingCacheItem:
-    def __init__(self, value, timestamp_seconds, status):
-        self.__value = value
-        self.__timestamp_seconds = timestamp_seconds
-        self.__status = status
+    """AgingCacheItem"""
+    def __init__(self, value: Transaction, timestamp_seconds: int, status: TransactionStatusInQueue):
+        self._value = value
+        self._timestamp_seconds = timestamp_seconds
+        self._status = status
 
     @property
-    def value(self):
-        return self.__value
+    def value(self) -> Transaction:
+        return self._value
 
     @value.setter
     def value(self, value):
-        self.__value = value
+        self._value = value
 
     @property
-    def timestamp_seconds(self):
-        return self.__timestamp_seconds
+    def timestamp_seconds(self) -> int:
+        return self._timestamp_seconds
 
     @timestamp_seconds.setter
     def timestamp_seconds(self, timestamp_seconds):
-        self.__timestamp_seconds = timestamp_seconds
+        self._timestamp_seconds = timestamp_seconds
 
     @property
-    def status(self):
-        return self.__status
+    def status(self) -> TransactionStatusInQueue:
+        return self._status
 
     @status.setter
     def status(self, status):
-        self.__status = status
+        self._status = status
 
 
 class AgingCache(MutableMapping):
-    DEFAULT_ITEM_STATUS = 1  # recommend replace this with custom Enum Type
-
-    def __init__(self, max_age_seconds, items=None, default_item_status=DEFAULT_ITEM_STATUS):
+    """AgingCache"""
+    def __init__(self, max_age_seconds: int, items=None, default_item_status: TransactionStatusInQueue = TransactionStatusInQueue.normal):
         self.__default_item_status = default_item_status
         self._max_age_seconds = max_age_seconds
         self._lock = threading.Lock()
 
         now_timestamp_seconds = int(time.time())
-        self.d = OrderedDict()
+        self.d: OrderedDict[str, AgingCacheItem] = OrderedDict()
         if items:
             for k, v in items:
                 self[k] = AgingCacheItem(v, now_timestamp_seconds, self.__default_item_status)
@@ -70,14 +74,14 @@ class AgingCache(MutableMapping):
     def pop_item(self):
         return self.d.popitem(last=False)[1].value
 
-    def pop_item_in_status(self, status=DEFAULT_ITEM_STATUS):
+    def pop_item_in_status(self, status=TransactionStatusInQueue.normal):
         with self._lock:
             operator = (key for key, value in self.d.items() if value.status == status)
             key = next(operator, None)
 
             return None if key is None else self.d.pop(key)
 
-    def get_item_in_status(self, get_status, set_status):
+    def get_item_in_status(self, get_status: TransactionStatusInQueue, set_status: TransactionStatusInQueue) -> Union[Transaction, None]:
         with self._lock:
             operator = (value for value in self.d.values() if value.status == get_status)
             item = next(operator, None)
@@ -105,15 +109,16 @@ class AgingCache(MutableMapping):
     def is_empty_in_status(self, status):
         return not self.get_item_in_status(status, status)
 
-    def __first_item(self):
-        return next(iter(self.d.items()))[1]
+    def _first_item(self) -> AgingCacheItem:
+        key_value: Tuple[Transaction, AgingCacheItem] = next(iter(self.d.items()))
+        return key_value[1]
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str):
         with self._lock:
             self.d.move_to_end(key)
             return self.d[key].value
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Union[Transaction, AgingCacheItem]):
         now_timestamp_seconds = int(time.time())
 
         with self._lock:
@@ -121,7 +126,7 @@ class AgingCache(MutableMapping):
                 self.d.move_to_end(key)
             else:
                 try:
-                    while self.__first_item().timestamp_seconds + self._max_age_seconds <= now_timestamp_seconds:
+                    while self._first_item().timestamp_seconds + self._max_age_seconds <= now_timestamp_seconds:
                         self.d.popitem(last=False)
                 except StopIteration:
                     # self.d is empty
@@ -129,7 +134,7 @@ class AgingCache(MutableMapping):
 
             self.d[key] = AgingCacheItem(value, int(time.time()), self.__default_item_status)
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str):
         del self.d[key]
 
     def __iter__(self):

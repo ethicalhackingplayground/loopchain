@@ -113,7 +113,7 @@ class BlockChain:
         return self.__block_versioner
 
     @property
-    def tx_versioner(self):
+    def tx_versioner(self) -> TransactionVersioner:
         return self.__tx_versioner
 
     def get_blockchain_store(self):

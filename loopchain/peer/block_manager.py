@@ -186,7 +186,7 @@ class BlockManager:
                     block=block_dumped,
                     channel=self.__channel_name))
 
-    def add_tx_obj(self, tx):
+    def add_tx_obj(self, tx: Transaction):
         """전송 받은 tx 를 Block 생성을 위해서 큐에 입력한다. load 하지 않은 채 입력한다.
 
         :param tx: transaction object
