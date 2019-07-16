@@ -2,12 +2,15 @@ from typing import TYPE_CHECKING
 from loopchain.blockchain.exception import TransactionInvalidNidError
 from loopchain.blockchain.transactions import TransactionVerifier as BaseTransactionVerifier
 from loopchain.blockchain.transactions.v3 import TransactionSerializer, HASH_SALT
+from loopchain.utils import logger
+import traceback
 
 if TYPE_CHECKING:
     from loopchain.blockchain.transactions import Transaction
 
 
 class TransactionVerifier(BaseTransactionVerifier):
+    a = set()
     _hash_salt = HASH_SALT
 
     def __init__(self, hash_generator_version: int, raise_exceptions=True):
@@ -21,6 +24,16 @@ class TransactionVerifier(BaseTransactionVerifier):
         self.verify(tx, None)
 
     def verify(self, tx: 'Transaction', blockchain=None):
+        # Check tx.hash is already verified
+        if tx.hash in self.a:
+            logger.notice("===Tx hash is already verified")
+            traceback.print_exc()
+            logger.notice("===if end")
+        else:
+            logger.notice("===Tx hash first encountered verification")
+            traceback.print_exc()
+            logger.notice("===else end")
+
         self.verify_loosely(tx, blockchain)
 
     def verify_loosely(self, tx: 'Transaction', blockchain=None):
