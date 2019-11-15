@@ -63,7 +63,6 @@ class ChannelService:
         logging.info(f"ChannelService : {channel_name}, Queue : {channel_queue_name}")
 
         ChannelProperty().name = channel_name
-        ChannelProperty().amqp_target = amqp_target
 
         StubCollection().amqp_key = amqp_key
         StubCollection().amqp_target = amqp_target
