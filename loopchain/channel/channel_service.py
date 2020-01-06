@@ -463,8 +463,9 @@ class ChannelService:
         self.__block_manager.set_peer_type(peer_type)
 
     def _is_genesis_node(self):
-        return ('genesis_data_path' in self.get_channel_option()
-                and self.is_support_node_function(conf.NodeFunction.Vote))
+        return ('genesis_data_path' in self.get_channel_option() and
+                self.is_support_node_function(conf.NodeFunction.Vote) and
+                self.block_manager.blockchain.block_height < 0)
 
     def __ready_to_height_sync(self):
         self.block_manager.blockchain.init_blockchain()
